@@ -11,7 +11,7 @@ async fn health_endpoint_responds(pool: PgPool) {
     let app = TestApp::new(pool);
     let response = app.get("/health").await;
     assert_eq!(response.status, StatusCode::OK);
-    assert_eq!(response.body, "sharp-oauth is alive");
+    assert_eq!(response.body, "sharp-account is alive");
 }
 
 #[sqlx::test]

@@ -1,6 +1,6 @@
 # Running in containers
 
-Sharp-OAuth ships as a single container image. It needs two things from the
+Sharp-Account ships as a single container image. It needs two things from the
 outside: a **PostgreSQL database** and a **directory of signing keys**.
 
 ## Files
@@ -15,32 +15,32 @@ outside: a **PostgreSQL database** and a **directory of signing keys**.
 
 ```bash
 docker compose up --build -d          # build and start in the background
-docker compose logs -f sharp-oauth    # follow logs
-curl http://localhost:3000/health     # → sharp-oauth is alive
+docker compose logs -f sharp-account    # follow logs
+curl http://localhost:3000/health     # → sharp-account is alive
 ```
 
 What happens on `up`:
 
 ```text
 db (postgres:18)  ──healthy──┐
-                             ├──▶ sharp-oauth (serve, runs migrations, listens on :3000)
+                             ├──▶ sharp-account (serve, runs migrations, listens on :3000)
 signing-key (one-shot) ──done┘
 ```
 
 1. `db` starts and waits until `pg_isready` passes.
-2. `signing-key` runs `sharp-oauth generate-signing-key --if-missing`. On the
+2. `signing-key` runs `sharp-account generate-signing-key --if-missing`. On the
    first start it creates an RSA key in the `signing-keys` volume; on later
    starts it sees a key and exits without doing anything.
-3. `sharp-oauth` starts, applies migrations and serves on port 3000
+3. `sharp-account` starts, applies migrations and serves on port 3000
    (published on `127.0.0.1` only).
 
 ### Register a client
 
-The image's entrypoint is the `sharp-oauth` CLI, so any subcommand works with
+The image's entrypoint is the `sharp-account` CLI, so any subcommand works with
 `docker compose run`:
 
 ```bash
-docker compose run --rm sharp-oauth create-client \
+docker compose run --rm sharp-account create-client \
     --name "Demo App" \
     --redirect-uri http://localhost:4000/callback \
     --scopes "openid profile email offline_access"
@@ -57,12 +57,12 @@ CLIENT_ID=sharp_client_... CLIENT_SECRET=sharp_secret_... scripts/demo-flow.sh
 If `cargo run` (or anything else) is using 3000:
 
 ```bash
-SHARP_OAUTH_PORT=3100 docker compose up -d
+SHARP_ACCOUNT_PORT=3100 docker compose up -d
 curl http://localhost:3100/health
 ISSUER_URL=http://localhost:3100 CLIENT_ID=... CLIENT_SECRET=... scripts/demo-flow.sh
 ```
 
-`ISSUER_URL` follows `SHARP_OAUTH_PORT` automatically, because the issuer must
+`ISSUER_URL` follows `SHARP_ACCOUNT_PORT` automatically, because the issuer must
 be the URL clients actually use.
 
 ### Useful commands
@@ -70,24 +70,24 @@ be the URL clients actually use.
 | Command | What it does |
 |---|---|
 | `docker compose ps` | Status and health of each service |
-| `docker compose run --rm sharp-oauth generate-signing-key` | Add a new key (key rotation); restart to load it |
-| `docker compose restart sharp-oauth` | Reload keys/config |
-| `docker compose exec db psql -U sharp_oauth` | Database shell |
+| `docker compose run --rm sharp-account generate-signing-key` | Add a new key (key rotation); restart to load it |
+| `docker compose restart sharp-account` | Reload keys/config |
+| `docker compose exec db psql -U sharp_account` | Database shell |
 | `docker compose down` | Stop. Database and keys are kept in volumes |
 | `docker compose down -v` | Stop and **delete** the database and signing keys |
 
 ## The image
 
 ```bash
-docker build -t sharp-oauth .
+docker build -t sharp-account .
 ```
 
 * **Build stage** compiles dependencies in their own layer (rebuilt only when
   `Cargo.toml`/`Cargo.lock` change), then the application. Migrations are
   compiled into the binary.
 * **Runtime stage** contains only the binary. It runs as UID `10001`
-  (`sharp-oauth`), not root. No compiler, source code or secrets are in it.
-* `HEALTHCHECK` runs `sharp-oauth healthcheck`, which calls `GET /health`
+  (`sharp-account`), not root. No compiler, source code or secrets are in it.
+* `HEALTHCHECK` runs `sharp-account healthcheck`, which calls `GET /health`
   locally, so the image does not need `curl`.
 * The server handles `SIGTERM`, so `docker stop` lets in-flight requests finish.
 
@@ -99,22 +99,22 @@ docker build -t sharp-oauth .
 | `ISSUER_URL` | none (required) | The public URL, e.g. `https://auth.sharpnr.com` |
 | `HOST` | `0.0.0.0` | Must not be `127.0.0.1` in a container, or nothing outside can connect |
 | `PORT` | `3000` | |
-| `SIGNING_KEYS_DIR` | `/var/lib/sharp-oauth/keys` | A volume |
+| `SIGNING_KEYS_DIR` | `/var/lib/sharp-account/keys` | A volume |
 | `SIGNING_ACTIVE_KID` | newest key | |
 | `RUST_LOG` | `info,sqlx=warn` | |
 
 ### Running the image without Compose
 
 ```bash
-docker volume create sharp-oauth-keys
-docker run --rm -v sharp-oauth-keys:/var/lib/sharp-oauth/keys sharp-oauth generate-signing-key --if-missing
+docker volume create sharp-account-keys
+docker run --rm -v sharp-account-keys:/var/lib/sharp-account/keys sharp-account generate-signing-key --if-missing
 
-docker run -d --name sharp-oauth \
+docker run -d --name sharp-account \
     -p 127.0.0.1:3000:3000 \
-    -v sharp-oauth-keys:/var/lib/sharp-oauth/keys \
-    -e DATABASE_URL=postgres://user:password@db-host:5432/sharp_oauth \
+    -v sharp-account-keys:/var/lib/sharp-account/keys \
+    -e DATABASE_URL=postgres://user:password@db-host:5432/sharp_account \
     -e ISSUER_URL=https://auth.sharpnr.com \
-    sharp-oauth
+    sharp-account
 ```
 
 If you mount a host directory instead of a volume, it must be readable by UID
@@ -126,7 +126,7 @@ If you mount a host directory instead of a volume, it must be readable by UID
 
 1. **TLS in front.** Put a reverse proxy or load balancer terminating HTTPS in
    front of the container and set `ISSUER_URL=https://…`. That also turns on
-   `Secure` cookies. Sharp-OAuth refuses a non-localhost `http` issuer.
+   `Secure` cookies. Sharp-Account refuses a non-localhost `http` issuer.
 2. **Real database credentials.** Use a managed PostgreSQL or at least a
    strong `POSTGRES_PASSWORD`, passed as a secret, never committed.
 3. **Signing keys from a secret manager.** Mount them read-only at
@@ -134,7 +134,7 @@ If you mount a host directory instead of a volume, it must be readable by UID
    Losing the key invalidates all issued tokens; leaking it lets anyone forge them.
 4. **Pin the image** by digest or version tag rather than `:dev`.
 5. **Keep the base images updated.** Rebuild regularly so Debian security
-   fixes are picked up, and scan the image (e.g. `docker scout cves sharp-oauth:dev`).
+   fixes are picked up, and scan the image (e.g. `docker scout cves sharp-account:dev`).
 6. **Multiple replicas are fine.** All state is in PostgreSQL; every replica
    needs the same keys and the same `ISSUER_URL`. Note that migrations run on
    startup, so start one replica first when deploying a schema change.

@@ -1,7 +1,7 @@
-# Local development stack: PostgreSQL + sharp-oauth.
+# Local development stack: PostgreSQL + sharp-account.
 #
 #   docker compose up --build        start everything, then open http://localhost:3000
-#   docker compose run --rm sharp-oauth create-client --name "Demo App" \
+#   docker compose run --rm sharp-account create-client --name "Demo App" \
 #       --redirect-uri http://localhost:4000/callback \
 #       --scopes "openid profile email offline_access"
 #   docker compose down              stop (data and keys are kept)
@@ -10,19 +10,19 @@
 # This file is for development. The default database password is not a secret;
 # see docs/deployment.md before running this anywhere public.
 
-name: sharp-oauth
+name: sharp-account
 
 services:
   db:
     image: postgres:18-alpine
     environment:
-      POSTGRES_DB: sharp_oauth
-      POSTGRES_USER: sharp_oauth
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sharp_oauth_dev_password}
+      POSTGRES_DB: sharp_account
+      POSTGRES_USER: sharp_account
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sharp_account_dev_password}
     volumes:
       - db-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sharp_oauth -d sharp_oauth"]
+      test: ["CMD-SHELL", "pg_isready -U sharp_account -d sharp_account"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -35,32 +35,32 @@ services:
   # It exits immediately on later starts, so keys are never rotated by accident.
   signing-key:
     build: .
-    image: sharp-oauth:dev
+    image: sharp-account:dev
     command: ["generate-signing-key", "--if-missing"]
     volumes:
-      - signing-keys:/var/lib/sharp-oauth/keys
+      - signing-keys:/var/lib/sharp-account/keys
     restart: "no"
 
-  sharp-oauth:
+  sharp-account:
     build: .
-    image: sharp-oauth:dev
+    image: sharp-account:dev
     depends_on:
       db:
         condition: service_healthy
       signing-key:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgres://sharp_oauth:${POSTGRES_PASSWORD:-sharp_oauth_dev_password}@db:5432/sharp_oauth
+      DATABASE_URL: postgres://sharp_account:${POSTGRES_PASSWORD:-sharp_account_dev_password}@db:5432/sharp_account
       # Must be the URL browsers and clients use to reach the server. It
       # becomes the `iss` claim, so it has to match the published port.
-      ISSUER_URL: ${ISSUER_URL:-http://localhost:${SHARP_OAUTH_PORT:-3000}}
+      ISSUER_URL: ${ISSUER_URL:-http://localhost:${SHARP_ACCOUNT_PORT:-3000}}
       RUST_LOG: ${RUST_LOG:-info,sqlx=warn}
     ports:
-      # Bound to localhost only. Change SHARP_OAUTH_PORT if 3000 is taken
+      # Bound to localhost only. Change SHARP_ACCOUNT_PORT if 3000 is taken
       # (for example by `cargo run`).
-      - "127.0.0.1:${SHARP_OAUTH_PORT:-3000}:3000"
+      - "127.0.0.1:${SHARP_ACCOUNT_PORT:-3000}:3000"
     volumes:
-      - signing-keys:/var/lib/sharp-oauth/keys
+      - signing-keys:/var/lib/sharp-account/keys
     restart: unless-stopped
 
 volumes:

@@ -1,4 +1,4 @@
-# Sharp-OAuth brand kit
+# Sharp-Account brand kit
 
 Mark: 4b Shards. Font: Archivo ExtraBold (800). Colors: ink #201e1d, red #ec3013, ground #f3f2f2.
 
@@ -8,7 +8,12 @@ Mark: 4b Shards. Font: Archivo ExtraBold (800). Colors: ink #201e1d, red #ec3013
 - png/x-header.png — X/Twitter header (1500×500)
 - png/linkedin-banner.png — LinkedIn page banner (1584×396)
 - png/avatar-*.png — org/social avatars, NuGet icon (800×800)
-- png/lockup.png — horizontal logo, transparent (2400×600)
-- svg/ — vector mark, icons, favicon (adapts to dark mode)
+- png/lockup.png — horizontal logo, transparent (2560×600)
+- svg/sharp-account-*.svg — vector mark and icons
+- svg/favicon.svg — favicon (adapts to dark mode)
+
+The Sharp-Account wordmark is Archivo ExtraBold with -0.04em letter-spacing.
+"Sharpnr" stays the company name in product copy ("Sign in with Sharpnr",
+"your Sharpnr account"); Sharp-Account is the name of this product.
 
 Keep the mark's clear space at least one blade width; never recolor the red blade except to ink on red grounds.

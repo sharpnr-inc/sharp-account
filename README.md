@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/brand/png/og-image.png" alt="Sharp-OAuth: OAuth engine, OIDC provider, open source" width="100%">
+  <img src="assets/brand/png/og-image.png" alt="Sharp-Account: OAuth engine, OIDC provider, open source" width="100%">
 </p>
 
-**Sharp-OAuth** is an open-source **OAuth 2.0 Authorization Server** and
+**Sharp-Account** is an open-source **OAuth 2.0 Authorization Server** and
 **OpenID Connect Provider** written in Rust. It is the engine behind
 **"Sign in with Sharpnr"**.
 
@@ -42,9 +42,9 @@ Requirements: Docker with Compose. No Rust or PostgreSQL install needed.
 
 ```bash
 docker compose up --build -d
-curl http://localhost:3000/health          # → sharp-oauth is alive
+curl http://localhost:3000/health          # → sharp-account is alive
 
-docker compose run --rm sharp-oauth create-client \
+docker compose run --rm sharp-account create-client \
     --name "Demo App" \
     --redirect-uri http://localhost:4000/callback \
     --scopes "openid profile email offline_access"
@@ -61,7 +61,7 @@ Requirements: Rust (edition 2024), PostgreSQL, and for the demo script `curl`,
 ```bash
 # 1. Configure
 cp .env.example .env              # edit DATABASE_URL if needed
-createdb sharp_oauth              # or: psql -c 'create database sharp_oauth'
+createdb sharp_account              # or: psql -c 'create database sharp_account'
 
 # 2. Create a signing key (written to keys/, which is git-ignored)
 cargo run -- generate-signing-key
@@ -75,7 +75,7 @@ cargo run -- create-client \
 
 # 4. Run the server (migrations are applied automatically)
 cargo run
-curl http://localhost:3000/health          # → sharp-oauth is alive
+curl http://localhost:3000/health          # → sharp-account is alive
 
 # 5. Walk through the whole flow with curl
 CLIENT_ID=sharp_client_... CLIENT_SECRET=sharp_secret_... scripts/demo-flow.sh

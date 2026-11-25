@@ -20,7 +20,7 @@ pub struct Model {
     #[sea_orm(column_type = "Text")]
     pub password_hash: SecretHash,
     pub display_name: Option<String>,
-    /// Sharp-OAuth has no email verification flow yet, so this is always
+    /// Sharp-Account has no email verification flow yet, so this is always
     /// `false`, and that is what we truthfully report to clients.
     pub email_verified: bool,
     #[sea_orm(column_type = "TimestampWithTimeZone")]

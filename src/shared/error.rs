@@ -123,7 +123,7 @@ impl IntoResponse for AppError {
             // authentication scheme to use.
             response.headers_mut().insert(
                 header::WWW_AUTHENTICATE,
-                HeaderValue::from_static("Basic realm=\"sharp-oauth\""),
+                HeaderValue::from_static("Basic realm=\"sharp-account\""),
             );
         }
         response

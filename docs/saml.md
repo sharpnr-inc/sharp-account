@@ -1,6 +1,6 @@
 # SAML Explained: A Beginner's Guide with TypeScript
 
-**SAML is not implemented in Sharp-OAuth yet.** This guide explains how the
+**SAML is not implemented in Sharp-Account yet.** This guide explains how the
 protocol works. Its TypeScript code is a standalone learning demo, not part
 of this server. For what the server does today, see
 [oauth-flow.md](oauth-flow.md).

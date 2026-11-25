@@ -1,11 +1,11 @@
-//! The `sharp-oauth` binary.
+//! The `sharp-account` binary.
 //!
 //! ```text
-//! sharp-oauth [serve]                      Run the server (default)
-//! sharp-oauth generate-signing-key         Create a new RSA key in SIGNING_KEYS_DIR
+//! sharp-account [serve]                      Run the server (default)
+//! sharp-account generate-signing-key         Create a new RSA key in SIGNING_KEYS_DIR
 //!     [--if-missing]                       only if the directory has no keys yet
-//! sharp-oauth healthcheck                  Exit 0 if GET /health succeeds (for containers)
-//! sharp-oauth create-client                Register an OAuth client
+//! sharp-account healthcheck                  Exit 0 if GET /health succeeds (for containers)
+//! sharp-account create-client                Register an OAuth client
 //!     --name <NAME>
 //!     --redirect-uri <URI>                 (repeat for several)
 //!     --scopes "<SCOPE> <SCOPE> ..."       e.g. "openid profile email offline_access"
@@ -23,7 +23,7 @@ use std::{
 };
 
 use anyhow::{Context, Result, bail};
-use sharp_oauth::{
+use sharp_account::{
     AppState, app,
     config::Config,
     oauth::services::{
@@ -83,7 +83,7 @@ async fn serve() -> Result<()> {
     let listener = tokio::net::TcpListener::bind(&address)
         .await
         .with_context(|| format!("cannot listen on {address}"))?;
-    tracing::info!(%address, %issuer, "sharp-oauth is listening");
+    tracing::info!(%address, %issuer, "sharp-account is listening");
 
     axum::serve(listener, app(state))
         .with_graceful_shutdown(shutdown_signal())

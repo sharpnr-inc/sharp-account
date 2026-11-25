@@ -20,7 +20,7 @@
 //!
 //! ## Policy
 //!
-//! Sharp-OAuth requires PKCE for **every** client (as OAuth 2.1 does) and
+//! Sharp-Account requires PKCE for **every** client (as OAuth 2.1 does) and
 //! accepts only the `S256` method. The `plain` method sends the verifier
 //! itself as the challenge, which defeats the purpose, so it is rejected
 //! rather than offered as a downgrade.

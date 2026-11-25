@@ -16,7 +16,7 @@ use axum::{
 };
 use base64::{Engine, engine::general_purpose::STANDARD};
 use sea_orm::SqlxPostgresConnector;
-use sharp_oauth::{
+use sharp_account::{
     AppState, app,
     authentication::services::user::{self, NewAccount, User},
     config::Config,

@@ -77,7 +77,7 @@ export async function startLogin(settings, { prompt, log }) {
 }
 
 const POPUP_NAME = "sharp-signin";
-const POPUP_MESSAGE = "sharp-oauth-callback";
+const POPUP_MESSAGE = "sharp-account-callback";
 // Prefixed to `state` so the page landing on /callback knows it is the popup.
 // `state` always comes back unchanged, unlike `window.name`, which browsers
 // may clear when the popup navigates to another site and back.

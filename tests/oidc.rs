@@ -5,7 +5,7 @@ mod common;
 use axum::http::StatusCode;
 use chrono::Utc;
 use common::{ISSUER, TestApp};
-use sharp_oauth::{
+use sharp_account::{
     oauth::services::scope::ScopeSet,
     oidc::services::id_token::{self, IdTokenClaims},
     token::services::access::{self, AccessTokenClaims},
@@ -78,7 +78,7 @@ async fn userinfo_without_token_is_401_without_error_code(pool: PgPool) {
     assert_eq!(response.status, StatusCode::UNAUTHORIZED);
     assert_eq!(
         response.headers["www-authenticate"],
-        "Bearer realm=\"sharp-oauth\""
+        "Bearer realm=\"sharp-account\""
     );
 }
 

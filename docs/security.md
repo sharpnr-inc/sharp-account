@@ -1,6 +1,6 @@
 # Security design
 
-Every protection in Sharp-OAuth exists to stop a specific attack. This page
+Every protection in Sharp-Account exists to stop a specific attack. This page
 lists them as **threat → defence → where in the code → which test proves it**.
 
 If you change one of these, change the test too, and never weaken a check to

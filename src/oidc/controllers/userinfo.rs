@@ -25,18 +25,18 @@ pub async fn userinfo(State(state): State<AppState>, headers: HeaderMap) -> Resp
     // RFC 6750 §3.1: with no credentials at all, answer 401 without an
     // error code. Otherwise say what was wrong.
     let Some(token) = token else {
-        return bearer_error(StatusCode::UNAUTHORIZED, "Bearer realm=\"sharp-oauth\"");
+        return bearer_error(StatusCode::UNAUTHORIZED, "Bearer realm=\"sharp-account\"");
     };
 
     match userinfo::userinfo(&state, token).await {
         Ok(claims) => Json(claims).into_response(),
         Err(UserInfoError::InvalidToken) => bearer_error(
             StatusCode::UNAUTHORIZED,
-            "Bearer realm=\"sharp-oauth\", error=\"invalid_token\"",
+            "Bearer realm=\"sharp-account\", error=\"invalid_token\"",
         ),
         Err(UserInfoError::InsufficientScope) => bearer_error(
             StatusCode::FORBIDDEN,
-            "Bearer realm=\"sharp-oauth\", error=\"insufficient_scope\", scope=\"openid\"",
+            "Bearer realm=\"sharp-account\", error=\"insufficient_scope\", scope=\"openid\"",
         ),
         Err(UserInfoError::Internal(err)) => err.into_response(),
     }

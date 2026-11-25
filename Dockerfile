@@ -1,6 +1,6 @@
-# Container image for sharp-oauth.
+# Container image for sharp-account.
 #
-#   docker build -t sharp-oauth .
+#   docker build -t sharp-account .
 #
 # Two stages:
 #   1. `build`   - full Rust toolchain, compiles a release binary.
@@ -8,7 +8,7 @@
 #                  non-root user. No compiler, no source code, no secrets.
 #
 # Secrets are never baked into the image. Configuration comes from environment
-# variables, and signing keys from a volume mounted at /var/lib/sharp-oauth/keys.
+# variables, and signing keys from a volume mounted at /var/lib/sharp-account/keys.
 # See compose.yaml for a complete local setup and docs/deployment.md for details.
 
 ARG RUST_VERSION=1.97
@@ -42,8 +42,8 @@ COPY templates ./templates
 COPY assets/web ./assets/web
 # `touch` makes sure Cargo sees the real files as newer than the placeholders.
 RUN touch src/main.rs src/lib.rs \
-    && cargo build --release --locked --bin sharp-oauth \
-    && cp target/release/sharp-oauth /usr/local/bin/sharp-oauth
+    && cargo build --release --locked --bin sharp-account \
+    && cp target/release/sharp-account /usr/local/bin/sharp-account
 
 # ---------------------------------------------------------------------------
 # Stage 2: runtime
@@ -58,29 +58,29 @@ RUN apt-get update && apt-get upgrade -y && apt-get clean && rm -rf /var/lib/apt
 
 # A fixed, unprivileged UID so volume permissions are predictable.
 ARG APP_UID=10001
-RUN useradd --system --uid ${APP_UID} --no-create-home --shell /usr/sbin/nologin sharp-oauth \
-    && mkdir -p /var/lib/sharp-oauth/keys \
-    && chown -R sharp-oauth:sharp-oauth /var/lib/sharp-oauth \
-    && chmod 700 /var/lib/sharp-oauth/keys
+RUN useradd --system --uid ${APP_UID} --no-create-home --shell /usr/sbin/nologin sharp-account \
+    && mkdir -p /var/lib/sharp-account/keys \
+    && chown -R sharp-account:sharp-account /var/lib/sharp-account \
+    && chmod 700 /var/lib/sharp-account/keys
 
-COPY --from=build /usr/local/bin/sharp-oauth /usr/local/bin/sharp-oauth
+COPY --from=build /usr/local/bin/sharp-account /usr/local/bin/sharp-account
 
 # Container defaults. DATABASE_URL and ISSUER_URL have no safe default and
 # must be provided at runtime.
 ENV HOST=0.0.0.0 \
     PORT=3000 \
-    SIGNING_KEYS_DIR=/var/lib/sharp-oauth/keys \
+    SIGNING_KEYS_DIR=/var/lib/sharp-account/keys \
     RUST_LOG=info,sqlx=warn
 
-USER sharp-oauth
-WORKDIR /var/lib/sharp-oauth
-VOLUME ["/var/lib/sharp-oauth/keys"]
+USER sharp-account
+WORKDIR /var/lib/sharp-account
+VOLUME ["/var/lib/sharp-account/keys"]
 EXPOSE 3000
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
-    CMD ["sharp-oauth", "healthcheck"]
+    CMD ["sharp-account", "healthcheck"]
 
-# `docker run sharp-oauth` starts the server; any other command is passed to
-# the CLI, e.g. `docker run sharp-oauth create-client --name ...`.
-ENTRYPOINT ["sharp-oauth"]
+# `docker run sharp-account` starts the server; any other command is passed to
+# the CLI, e.g. `docker run sharp-account create-client --name ...`.
+ENTRYPOINT ["sharp-account"]
 CMD ["serve"]

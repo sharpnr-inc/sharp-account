@@ -1,7 +1,7 @@
 # React test client
 
 A small React app for trying "Sign in with Sharpnr" against a local
-sharp-oauth server. It is a **public client**: it has no client secret and
+sharp-account server. It is a **public client**: it has no client secret and
 uses the Authorization Code flow with PKCE, like any browser app should.
 
 It does every step by hand in [`src/oauth.js`](src/oauth.js) (no OAuth
@@ -21,7 +21,7 @@ A log at the bottom of the page shows each step as it happens.
 
 ## Run it
 
-1. Start sharp-oauth (`cargo run` in the repository root). It listens on
+1. Start sharp-account (`cargo run` in the repository root). It listens on
    `http://localhost:3000`.
 2. Open <http://localhost:3000/developer/apps/new>, sign in, and register an
    app:
