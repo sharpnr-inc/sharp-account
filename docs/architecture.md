@@ -6,7 +6,7 @@ itself see [oauth-flow.md](oauth-flow.md); for security reasoning see
 
 ## One package, organised by feature
 
-Sharp-OAuth is a single Cargo package. It has a library (`src/lib.rs`) and a
+Sharp-Account is a single Cargo package. It has a library (`src/lib.rs`) and a
 thin binary (`src/main.rs`). The library/binary split exists only so the
 integration tests in `tests/` can build the exact same application.
 
@@ -128,7 +128,7 @@ templates/                   HTML, rendered with Askama; each .css sits next to 
 ├── layouts/
 │   └── base.html  base.css  shared shell: <head>, page frame
 ├── partials/
-│   ├── header.html          Sharpnr mark and wordmark
+│   ├── header.html          mark and Sharp-Account wordmark
 │   └── footer.html
 └── pages/
     ├── home.html  signin.html  signup.html

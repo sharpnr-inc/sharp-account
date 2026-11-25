@@ -4,7 +4,7 @@
 //! is implemented:
 //!
 //! ```text
-//!  Client app                    Sharp-OAuth                         User
+//!  Client app                    Sharp-Account                         User
 //!  ──────────                    ───────────                         ────
 //!  1. redirect browser ────────▶ GET /oauth/authorize
 //!                                  authorization::validate

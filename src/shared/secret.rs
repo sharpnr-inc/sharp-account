@@ -1,6 +1,6 @@
 //! Security primitives shared by the whole server.
 //!
-//! Sharp-OAuth hands out several kinds of *opaque secrets*: session tokens,
+//! Sharp-Account hands out several kinds of *opaque secrets*: session tokens,
 //! authorization codes, refresh tokens, client secrets and CSRF tokens. They
 //! all follow the same recipe:
 //!

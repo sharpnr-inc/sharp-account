@@ -10,7 +10,7 @@ use common::{
     query_param,
 };
 use jsonwebtoken::{DecodingKey, Validation, jwk::JwkSet};
-use sharp_oauth::oidc::services::id_token::IdTokenClaims;
+use sharp_account::oidc::services::id_token::IdTokenClaims;
 use sqlx::PgPool;
 
 const ALL_SCOPES: &str = "openid profile email offline_access";
@@ -453,7 +453,7 @@ async fn obtain_code(
     app: &TestApp,
     scopes: &str,
 ) -> (
-    sharp_oauth::oauth::services::client::RegisteredClient,
+    sharp_account::oauth::services::client::RegisteredClient,
     String,
     String,
 ) {
@@ -693,7 +693,7 @@ async fn unsupported_grant_type_and_bad_content_type(pool: PgPool) {
 
 async fn refresh(
     app: &TestApp,
-    client: &sharp_oauth::oauth::services::client::RegisteredClient,
+    client: &sharp_account::oauth::services::client::RegisteredClient,
     token: &str,
     extra: &[(&str, &str)],
 ) -> common::TestResponse {

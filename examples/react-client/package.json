@@ -1,8 +1,8 @@
 {
-  "name": "sharp-oauth-react-client",
+  "name": "sharp-account-react-client",
   "private": true,
   "version": "0.1.0",
-  "description": "A small React app for testing \"Sign in with Sharpnr\" against a local sharp-oauth server.",
+  "description": "A small React app for testing \"Sign in with Sharpnr\" against a local sharp-account server.",
   "type": "module",
   "scripts": {
     "dev": "vite",

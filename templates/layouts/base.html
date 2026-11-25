@@ -1,5 +1,5 @@
 {#
-  Base layout for every Sharpnr page.
+  Base layout for every Sharp-Account page.
 
   Child templates fill in the `title` and `content` blocks, and may add their
   own stylesheet in the `styles` block. Values written with {{ ... }} are
@@ -30,7 +30,7 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/css/base.css" />
     {% block styles %}{% endblock %}
-    <title>{% block title %}Sharpnr{% endblock %} · Sharpnr</title>
+    <title>{% block title %}Sharpnr{% endblock %} · Sharp-Account</title>
   </head>
   <body>
     {% include "partials/header.html" %}

@@ -4,7 +4,7 @@
 //! `HttpOnly` cookie and store `SHA-256(token)` in `user_sessions`. On every
 //! request the cookie is hashed and looked up again.
 //!
-//! These sessions belong to *Sharp-OAuth itself*. Third-party applications
+//! These sessions belong to *Sharp-Account itself*. Third-party applications
 //! never see this cookie; they get OAuth tokens instead.
 
 use chrono::{Duration, Utc};

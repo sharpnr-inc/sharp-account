@@ -9,10 +9,10 @@ The cast:
 * **User**: a person with a browser and a Sharpnr account.
 * **Client**: a third-party app registered with Sharpnr (`client_id`
   `sharp_client_…`, redirect URI `http://localhost:4000/callback`).
-* **Sharp-OAuth**: this server, at `http://localhost:3000`.
+* **Sharp-Account**: this server, at `http://localhost:3000`.
 
 ```text
- User's browser            Client app                   Sharp-OAuth
+ User's browser            Client app                   Sharp-Account
  ──────────────            ──────────                   ───────────
        │   click "Sign in     │                               │
        │   with Sharpnr"      │                               │
@@ -146,7 +146,7 @@ which one answered.
 
 The client must verify that `state` equals what it stored in step 0 and that
 `iss` is `http://localhost:3000`. Otherwise it must stop. (This happens in
-the client, not in Sharp-OAuth.)
+the client, not in Sharp-Account.)
 
 ## 6. Code exchange at `/oauth/token`
 

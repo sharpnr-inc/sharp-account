@@ -1,4 +1,4 @@
-//! # Sharp-OAuth
+//! # Sharp-Account
 //!
 //! An OAuth 2.0 Authorization Server and OpenID Connect Provider: the engine
 //! behind "Sign in with Sharpnr".

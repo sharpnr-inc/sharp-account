@@ -1,4 +1,4 @@
-//! `GET /favicon.svg`: the Sharp-OAuth mark for browser tabs.
+//! `GET /favicon.svg`: the Sharp-Account mark for browser tabs.
 //!
 //! Compiled into the binary, so the server needs no static-file directory.
 //! The SVG switches its ink shards to light grey in dark mode.

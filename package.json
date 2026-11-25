@@ -1,5 +1,5 @@
 {
-  "name": "sharp-oauth-tooling",
+  "name": "sharp-account-tooling",
   "private": true,
   "description": "Dev tooling only (Prettier for Askama templates). Not part of the Rust build.",
   "scripts": {
