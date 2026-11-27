@@ -27,6 +27,7 @@ target
 
 # Local configuration and private key material. Never commit these.
 .env
+.env.production
 /keys/
 
 # Node dev tooling (Prettier)
