@@ -16,7 +16,7 @@
 
 [Unit]
 Description=Sharp-Account identity provider (account.sharpnr.com)
-Documentation=https://github.com/sharpnr-inc/sharp-oauth
+Documentation=https://github.com/sharpnr-inc/sharp-account
 # Startup connects to PostgreSQL and applies migrations. After= only orders
 # the start; if PostgreSQL runs on another host this does nothing.
 After=network-online.target postgresql.service

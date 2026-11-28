@@ -57,7 +57,79 @@ pipeline {
         }
 
         // ─────────────────────────────────────────
-        // Step 2 — Lint + Test
+        // Step 2 — Check the server is set up
+        // Takes a second, so a missing toolchain, sudo rule or unit file
+        // fails here instead of after a 10-minute build. Reports every
+        // problem at once.
+        // ─────────────────────────────────────────
+        stage('Check Server') {
+            steps {
+                sh '''
+                    FAILED=0
+
+                    echo "▶ Rust toolchain..."
+                    if command -v cargo >/dev/null 2>&1; then
+                        echo "✅ $(cargo --version), $(rustc --version)"
+                    else
+                        echo "❌ cargo not found for user $(whoami): install Rust with rustup as jenkins"
+                        FAILED=1
+                    fi
+
+                    echo "▶ C compiler, pkg-config, OpenSSL (needed by the ring and openssl-sys crates)..."
+                    command -v cc >/dev/null 2>&1 || { echo "❌ cc not found: sudo pacman -S --needed base-devel"; FAILED=1; }
+                    if command -v pkg-config >/dev/null 2>&1; then
+                        pkg-config --exists openssl || { echo "❌ OpenSSL not found: sudo pacman -S --needed openssl"; FAILED=1; }
+                    else
+                        echo "❌ pkg-config not found: sudo pacman -S --needed base-devel"; FAILED=1
+                    fi
+
+                    echo "▶ Group ${SERVICE_GROUP}..."
+                    if id -nG | tr ' ' '\\n' | grep -qx "${SERVICE_GROUP}"; then
+                        echo "✅ $(whoami) is in ${SERVICE_GROUP}"
+                    else
+                        echo "❌ $(whoami) is not in group ${SERVICE_GROUP}: sudo usermod -aG ${SERVICE_GROUP} jenkins, then restart Jenkins"
+                        FAILED=1
+                    fi
+
+                    echo "▶ sudo rule for ${SERVICE_NAME}..."
+                    if sudo -n -l systemctl start ${SERVICE_NAME} >/dev/null 2>&1 \\
+                        && sudo -n -l systemctl stop ${SERVICE_NAME} >/dev/null 2>&1; then
+                        echo "✅ $(whoami) may start and stop ${SERVICE_NAME}"
+                    else
+                        echo "❌ $(whoami) may not run 'sudo systemctl start|stop ${SERVICE_NAME}' without a password: add /etc/sudoers.d/jenkins-sharp-account"
+                        FAILED=1
+                    fi
+
+                    echo "▶ systemd unit..."
+                    if [ "$(systemctl show -p LoadState --value ${SERVICE_NAME})" = loaded ]; then
+                        echo "✅ ${SERVICE_NAME}.service is installed"
+                    else
+                        echo "❌ ${SERVICE_NAME}.service not found: install deploy/sharp-account.service in /etc/systemd/system"
+                        FAILED=1
+                    fi
+
+                    echo "▶ Folders..."
+                    for dir in "${APP_DIR}" "${BACKUP_DIR}"; do
+                        if mkdir -p "$dir" 2>/dev/null && [ -w "$dir" ]; then
+                            echo "✅ $dir is writable"
+                        else
+                            echo "❌ $dir is not writable by $(whoami): sudo mkdir -p $dir && sudo chown jenkins:${SERVICE_GROUP} $dir"
+                            FAILED=1
+                        fi
+                    done
+
+                    if ! id -nG | tr ' ' '\\n' | grep -qxE "systemd-journal|wheel|adm"; then
+                        echo "⚠️ $(whoami) cannot read the system journal, so the log check after restart sees nothing: sudo usermod -aG systemd-journal jenkins"
+                    fi
+
+                    [ "$FAILED" = 0 ] || { echo "❌ Server is not ready for ${SERVICE_NAME}, see above"; exit 1; }
+                    echo "✅ Server is ready"
+                '''
+            }
+        }
+
+        // ─────────────────────────────────────────
+        // Step 3 — Lint + Test
         // Integration tests need a PostgreSQL user with CREATEDB (each test
         // creates and drops its own database). They run only when the
         // TEST_DATABASE_URL variable is set in Jenkins; otherwise only the
@@ -66,8 +138,6 @@ pipeline {
         stage('Lint & Test') {
             steps {
                 sh '''
-                    echo "▶ Toolchain: $(cargo --version), $(rustc --version)"
-
                     echo "▶ Checking formatting..."
                     cargo fmt --check || echo "⚠️ Code is not formatted (run 'cargo fmt'). Not blocking."
 
@@ -86,7 +156,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────
-        // Step 3 — Build the release binary
+        // Step 4 — Build the release binary
         // ─────────────────────────────────────────
         stage('Build') {
             steps {
@@ -102,7 +172,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────
-        // Step 4 — Check the production env file
+        // Step 5 — Check the production env file
         // Stored in Jenkins as a "Secret file" credential. Checked before
         // anything on the server is touched, so a bad file fails the build
         // while the running service keeps serving.
@@ -141,7 +211,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────
-        // Step 5 — Deploy binary, env file, signing keys
+        // Step 6 — Deploy binary, env file, signing keys
         // The service keeps running during this stage: replacing the binary
         // with `mv` does not affect the running process. The new binary is
         // picked up by the restart in the next stage.
@@ -183,8 +253,8 @@ pipeline {
                     sh '''
                         echo "▶ Installing .env.production..."
                         cp "$ENV_FILE" ${APP_DIR}/.env.production.new
-                        sudo chown jenkins:${SERVICE_GROUP} ${APP_DIR}/.env.production.new
-                        sudo chmod 640 ${APP_DIR}/.env.production.new
+                        chgrp ${SERVICE_GROUP} ${APP_DIR}/.env.production.new
+                        chmod 640 ${APP_DIR}/.env.production.new
                         mv -f ${APP_DIR}/.env.production.new ${APP_DIR}/.env.production
                         echo "✅ .env.production installed"
                     '''
@@ -202,16 +272,16 @@ pipeline {
                         echo "⚠️ A new signing key was created. Back up ${KEYS_DIR} now."
                     fi
 
-                    sudo chown -R jenkins:${SERVICE_GROUP} ${KEYS_DIR}
-                    sudo chmod 750 ${KEYS_DIR}
-                    sudo chmod 640 ${KEYS_DIR}/*.pem
+                    chgrp -R ${SERVICE_GROUP} ${KEYS_DIR}
+                    chmod 750 ${KEYS_DIR}
+                    chmod 640 ${KEYS_DIR}/*.pem
                     echo "✅ Signing keys ready ($(ls ${KEYS_DIR}/*.pem | wc -l) key(s))"
                 '''
             }
         }
 
         // ─────────────────────────────────────────
-        // Step 6 — Restart + Verify
+        // Step 7 — Restart + Verify
         // Startup connects to PostgreSQL and applies pending migrations, then
         // listens. We wait for /health instead of sleeping a fixed time.
         // ─────────────────────────────────────────
@@ -221,8 +291,8 @@ pipeline {
                     START_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
                     echo "▶ Restarting ${SERVICE_NAME}..."
-                    sudo systemctl stop ${SERVICE_NAME} || true
-                    sudo systemctl start ${SERVICE_NAME}
+                    sudo -n systemctl stop ${SERVICE_NAME} || true
+                    sudo -n systemctl start ${SERVICE_NAME}
 
                     # ── Wait for /health ────────────────────────
                     echo "▶ Waiting for http://127.0.0.1:${APP_PORT}/health..."
@@ -239,12 +309,12 @@ pipeline {
 
                     if [ "$HEALTHY" = false ]; then
                         echo "❌ ${SERVICE_NAME} did not become healthy on port ${APP_PORT} in 30s"
-                        sudo systemctl status ${SERVICE_NAME} --no-pager || true
+                        systemctl status ${SERVICE_NAME} --no-pager || true
                         journalctl -u ${SERVICE_NAME} --since "$START_TIME" --no-pager -n 50 || true
                         exit 1
                     fi
 
-                    sudo systemctl status ${SERVICE_NAME} --no-pager
+                    systemctl status ${SERVICE_NAME} --no-pager
 
                     # ── Issuer check ────────────────────────────
                     # Every token carries this issuer; clients reject a mismatch.
@@ -289,11 +359,11 @@ pipeline {
                     cp ${BACKUP_PATH}/${BINARY_NAME} ${APP_DIR}/${BINARY_NAME}.new
                     chmod 755 ${APP_DIR}/${BINARY_NAME}.new
                     mv -f ${APP_DIR}/${BINARY_NAME}.new ${APP_DIR}/${BINARY_NAME}
-                    sudo systemctl stop ${SERVICE_NAME} || true
-                    sudo systemctl start ${SERVICE_NAME} || true
+                    sudo -n systemctl stop ${SERVICE_NAME} || true
+                    sudo -n systemctl start ${SERVICE_NAME} || true
                 else
                     echo "❌ Deployment failed — making sure ${SERVICE_NAME} is running..."
-                    sudo systemctl start ${SERVICE_NAME} || true
+                    sudo -n systemctl start ${SERVICE_NAME} || true
                 fi
             '''
         }
