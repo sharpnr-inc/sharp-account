@@ -1,0 +1,83 @@
+# systemd unit for Sharp-Account in production (bare metal, no Docker).
+#
+# One-time setup on the server:
+#
+#   sudo cp deploy/sharp-account.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable sharp-account
+#
+# After that, every Jenkins build (see Jenkinsfile) installs the binary, .env.production
+# and signing keys in /opt/apps/sharpnr-account and restarts this service.
+# The first Jenkins deploy is also the first start: before it there is no
+# binary to run.
+#
+#   journalctl -u sharp-account -f     follow the logs
+#   systemctl status sharp-account     is it running?
+
+[Unit]
+Description=Sharp-Account identity provider (account.sharpnr.com)
+Documentation=https://github.com/sharpnr-inc/sharp-oauth
+# Startup connects to PostgreSQL and applies migrations. After= only orders
+# the start; if PostgreSQL runs on another host this does nothing.
+After=network-online.target postgresql.service
+Wants=network-online.target
+# A broken .env.production makes every start fail. Give up after 5 failures in a minute
+# instead of restarting forever.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+# Same user as sharpnr-engine. Jenkins installs .env.production and the keys as
+# jenkins:sharpnrllp, mode 640, so this group can read them.
+User=sharpnrllp
+Group=sharpnrllp
+
+# SIGNING_KEYS_DIR=keys in .env.production is resolved relative to the working
+# directory. Must match APP_DIR in the Jenkinsfile.
+WorkingDirectory=/opt/apps/sharpnr-account
+# Like sharpnr-engine: systemd loads the env file and refuses to start if it is
+# missing. This line is the app's only source of configuration (the app itself
+# only looks for a file named .env).
+EnvironmentFile=/opt/apps/sharpnr-account/.env.production
+ExecStart=/opt/apps/sharpnr-account/sharp-account serve
+# Plain log lines in the journal, without terminal colour codes.
+Environment=NO_COLOR=1
+
+Restart=on-failure
+RestartSec=3
+# systemd sends SIGTERM on stop; the server then lets in-flight requests
+# finish before exiting (graceful shutdown in main.rs).
+TimeoutStopSec=30
+
+# ── Hardening ────────────────────────────────────────────────────────────
+# The app only reads its files and makes network connections. It writes
+# nothing to disk (logs go to the journal), so the whole filesystem can be
+# read-only and almost everything else can be switched off.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+# TCP for clients, PostgreSQL and SMTP; AF_UNIX for a local PostgreSQL socket.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
