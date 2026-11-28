@@ -361,9 +361,11 @@ pipeline {
                     mv -f ${APP_DIR}/${BINARY_NAME}.new ${APP_DIR}/${BINARY_NAME}
                     sudo -n systemctl stop ${SERVICE_NAME} || true
                     sudo -n systemctl start ${SERVICE_NAME} || true
-                else
+                elif [ -x ${APP_DIR}/${BINARY_NAME} ] && [ -f ${APP_DIR}/.env.production ]; then
                     echo "❌ Deployment failed — making sure ${SERVICE_NAME} is running..."
                     sudo -n systemctl start ${SERVICE_NAME} || true
+                else
+                    echo "❌ Deployment failed — ${SERVICE_NAME} has never been deployed, nothing to start"
                 fi
             '''
         }
